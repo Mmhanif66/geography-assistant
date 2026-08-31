@@ -5,7 +5,7 @@ import google.generativeai as genai
 import glob
 
 st.set_page_config(page_title="GIS Academic Assistant", page_icon="🌍")
-st.title("🌍 GIS & Geography Academic AI Assistant")
+st.title("🌍 Geography Academic AI Assistant")
 
 try:
     api_key = st.secrets["GEMINI_API_KEY"]
@@ -28,23 +28,27 @@ def load_pdf_texts():
 with st.spinner("সিস্টেম প্রস্তুত করা হচ্ছে..."):
     pdf_context = load_pdf_texts()
 
-user_query = st.text_input("আপনার জিআইএস বা ভূগোলের প্রশ্নটি এখানে লিখুন:")
+user_query = st.text_input("Enter your Question:")
 
 if user_query:
     if not pdf_context:
         st.warning("`data` ফোল্ডারে কোনো পিডিএফ ফাইল পাওয়া যায়নি।")
     else:
         with st.spinner("উত্তর তৈরি করা হচ্ছে..."):
-            model = genai.GenerativeModel("gemini-1.5-flash")
-            
-            prompt = f"""You are an expert academic research assistant in Geography and GIS. 
-            Answer accurately and concisely based on the context below.
-            
-            Context:
-            {pdf_context[:25000]}
-            
-            Question: {user_query}"""
-            
-            response = model.generate_content(prompt)
-            st.markdown("### উত্তর:")
-            st.write(response.text)
+            try:
+                # Fixed model path with 'models/' prefix to avoid NotFound error
+                model = genai.GenerativeModel("models/gemini-1.5-flash")
+                
+                prompt = f"""You are an expert academic research assistant in Geography and GIS. 
+                Answer accurately and concisely based on the context below.
+                
+                Context:
+                {pdf_context[:25000]}
+                
+                Question: {user_query}"""
+                
+                response = model.generate_content(prompt)
+                st.markdown("### উত্তর:")
+                st.write(response.text)
+            except Exception as e:
+                st.error(f"টেকনিক্যাল সমস্যা দেখা দিয়েছে: {e}")
