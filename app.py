@@ -1,6 +1,7 @@
 import os
 import streamlit as st
-from langchain_google_genai import ChatGoogleGenerativeAI, GoogleGenerativeAIEmbeddings
+from langchain_google_genai import ChatGoogleGenerativeAI
+from langchain_community.embeddings import HuggingFaceEmbeddings
 from langchain_community.document_loaders import PyPDFDirectoryLoader
 from langchain.text_splitter import RecursiveCharacterTextSplitter
 from langchain_community.vectorstores import FAISS
@@ -9,7 +10,7 @@ from langchain.chains import RetrievalQA
 st.set_page_config(page_title="GIS Academic Assistant", page_icon="🌍")
 st.title("🌍 GIS & Geography Academic AI Assistant")
 
-# Get API Key from Streamlit Secrets and set to environment
+# Get API Key from Streamlit Secrets
 try:
     api_key = st.secrets["GEMINI_API_KEY"]
     os.environ["GOOGLE_API_KEY"] = api_key
@@ -25,8 +26,8 @@ def load_vector_db():
     text_splitter = RecursiveCharacterTextSplitter(chunk_size=1000, chunk_overlap=200)
     splits = text_splitter.split_documents(docs)
     
-    # Using text-embedding-004 model
-    embeddings = GoogleGenerativeAIEmbeddings(model="text-embedding-004")
+    # Using Hugging Face embeddings to bypass Google API embedding errors
+    embeddings = HuggingFaceEmbeddings(model_name="all-MiniLM-L6-v2")
     vectorstore = FAISS.from_documents(splits, embeddings)
     return vectorstore.as_retriever(search_kwargs={"k": 3})
 
