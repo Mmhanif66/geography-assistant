@@ -1,46 +1,55 @@
 import os
 import streamlit as st
-from langchain_google_genai import ChatGoogleGenerativeAI
-from langchain_community.embeddings import HuggingFaceEmbeddings
-from langchain_community.document_loaders import PyPDFDirectoryLoader
-from langchain.text_splitter import RecursiveCharacterTextSplitter
-from langchain_community.vectorstores import FAISS
-from langchain.chains import RetrievalQA
+from pypdf import PdfReader
+import google.generativeai as genai
+import glob
 
 st.set_page_config(page_title="GIS Academic Assistant", page_icon="🌍")
 st.title("🌍 GIS & Geography Academic AI Assistant")
 
-# Get API Key from Streamlit Secrets
 try:
     api_key = st.secrets["GEMINI_API_KEY"]
-    os.environ["GOOGLE_API_KEY"] = api_key
+    genai.configure(api_key=api_key)
 except Exception:
     st.error("দয়া করে Streamlit Secrets-এ আপনার Gemini API Key সেট করুন।")
     st.stop()
 
+# Optimized caching for speed
+@st.cache_data
+def load_pdf_texts():
+    text = ""
+    for pdf in glob.glob("data/*.pdf"):
+        reader = PdfReader(pdf)
+        for page in reader.pages:
+            extracted = page.extract_text()
+            if extracted:
+                text += extracted + "\n"
+    return text
+
+with st.spinner("সিস্টেম প্রস্তুত করা হচ্ছে..."):
+    pdf_context = load_pdf_texts()
+
 @st.cache_resource
-def load_vector_db():
-    loader = PyPDFDirectoryLoader("data")
-    docs = loader.load()
-    
-    text_splitter = RecursiveCharacterTextSplitter(chunk_size=1000, chunk_overlap=200)
-    splits = text_splitter.split_documents(docs)
-    
-    # Using Hugging Face embeddings to bypass Google API embedding errors
-    embeddings = HuggingFaceEmbeddings(model_name="all-MiniLM-L6-v2")
-    vectorstore = FAISS.from_documents(splits, embeddings)
-    return vectorstore.as_retriever(search_kwargs={"k": 3})
+def get_gemini_model():
+    return genai.GenerativeModel("gemini-1.5-flash")
 
-with st.spinner("সিলেবাস ও নোটস লোড করা হচ্ছে... দয়া করে অপেক্ষা করুন।"):
-    retriever = load_vector_db()
-
-llm = ChatGoogleGenerativeAI(model="gemini-1.5-flash", temperature=0.3)
-qa_chain = RetrievalQA.from_chain_type(llm=llm, chain_type="stuff", retriever=retriever)
+model = get_gemini_model()
 
 user_query = st.text_input("আপনার জিআইএস বা ভূগোলের প্রশ্নটি এখানে লিখুন:")
+
 if user_query:
-    with st.spinner("সিলেবাস খুঁজে উত্তর তৈরি করা হচ্ছে..."):
-        prompt = f"You are an expert academic research assistant in Geography, GIS, and Geoinformatics. Answer strictly and accurately based on the provided context: {user_query}"
-        response = qa_chain.run(prompt)
-        st.markdown("### উত্তর:")
-        st.write(response)
+    if not pdf_context:
+        st.warning("`data` ফোল্ডারে কোনো পিডিএফ ফাইল পাওয়া যায়নি।")
+    else:
+        with st.spinner("দ্রুত উত্তর খোঁজা হচ্ছে..."):
+            prompt = f"""You are an expert academic research assistant in Geography and GIS. 
+            Answer accurately and concisely based on the context below.
+            
+            Context:
+            {pdf_context[:20000]}
+            
+            Question: {user_query}"""
+            
+            response = model.generate_content(prompt)
+            st.markdown("### উত্তর:")
+            st.write(response.text)
