@@ -5,7 +5,7 @@ import google.generativeai as genai
 import glob
 
 st.set_page_config(page_title="GIS Academic Assistant", page_icon="🌍")
-st.title("🌍 Geography Academic AI Assistant")
+st.title("🌍 GIS & Geography Academic AI Assistant")
 
 try:
     api_key = st.secrets["GEMINI_API_KEY"]
@@ -28,7 +28,18 @@ def load_pdf_texts():
 with st.spinner("সিস্টেম প্রস্তুত করা হচ্ছে..."):
     pdf_context = load_pdf_texts()
 
-user_query = st.text_input("Enter your Question:")
+# Automatically find a working model supported by your API key
+@st.cache_resource
+def get_working_model():
+    try:
+        for m in genai.list_models():
+            if 'generateContent' in m.supported_generation_methods:
+                return genai.GenerativeModel(m.name)
+    except Exception:
+        pass
+    return genai.GenerativeModel("gemini-1.5-flash")
+
+user_query = st.text_input("আপনার জিআইএস বা ভূগোলের প্রশ্নটি এখানে লিখুন:")
 
 if user_query:
     if not pdf_context:
@@ -36,8 +47,7 @@ if user_query:
     else:
         with st.spinner("উত্তর তৈরি করা হচ্ছে..."):
             try:
-                # Fixed model path with 'models/' prefix to avoid NotFound error
-                model = genai.GenerativeModel("models/gemini-1.5-flash")
+                model = get_working_model()
                 
                 prompt = f"""You are an expert academic research assistant in Geography and GIS. 
                 Answer accurately and concisely based on the context below.
