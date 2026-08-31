@@ -5,7 +5,7 @@ import google.generativeai as genai
 import glob
 
 st.set_page_config(page_title="GIS Academic Assistant", page_icon="🌍")
-st.title("🌍 Geography Academic AI Assistant")
+st.title("🌍 GIS & Geography Academic AI Assistant")
 
 try:
     api_key = st.secrets["GEMINI_API_KEY"]
@@ -38,7 +38,7 @@ for message in st.session_state.messages:
         st.markdown(message["content"])
 
 # Chat input box
-user_query = st.chat_input("Write your question:")
+user_query = st.chat_input("আপনার জিআইএস বা ভূগোলের প্রশ্নটি এখানে লিখুন:")
 
 if user_query:
     st.session_state.messages.append({"role": "user", "content": user_query})
@@ -46,15 +46,14 @@ if user_query:
         st.markdown(user_query)
 
     with st.chat_message("assistant"):
-        with st.spinner("processing yor answer base on syllabus..."):
+        with st.spinner("উত্তর তৈরি করা হচ্ছে..."):
             try:
                 model = genai.GenerativeModel("gemini-3.6-flash")
                 
-                # Strict syllabus priority prompt
+                # Updated prompt: Prioritizes syllabus if available, but ALWAYS answers using expert knowledge if not.
                 prompt = f"""You are an expert academic research assistant in Geography, GIS, and Geoinformatics. 
-                - **Primary Rule (Strict Priority):** Always prioritize the provided syllabus and course books context first when answering. Use them as your main reference.
-                - If the requested topic or answer is found in the syllabus, base your answer primarily on it.
-                - If the topic is NOT mentioned or available in the syllabus, clearly state that it is not covered in the provided syllabus/books. Do not fabricate or force external answers as syllabus material.
+                - **Priority Rule:** If the topic is found in the provided syllabus/books context, prioritize and base your answer primarily on it.
+                - **Fallback Rule:** If the topic is NOT mentioned in the syllabus, **do not refuse or stop**. You must still provide a comprehensive, accurate, and professional answer using your advanced expert knowledge in GIS, Remote Sensing, and Geography.
                 
                 Syllabus Context:
                 {pdf_context[:25000]}
