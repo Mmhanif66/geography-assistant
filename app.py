@@ -21,7 +21,7 @@ GDRIVE_LINKS = [
     "https://drive.google.com/drive/folders/18HWp-8h5Q-SjKAO2uoJtq5m-KDpvHNQy?usp=sharing",
     "https://drive.google.com/drive/folders/1F5lTVpg4UgrEHPm1ffOiDUogeeOgPxaT?usp=sharing",
     "https://drive.google.com/drive/folders/1nHGAGPn39ev0zuYiatRmVPozMj-KBD9c?usp=sharing",
-    
+    "https://drive.google.com/drive/folders/1miba1GdMQYtq89MmIeArMUooBTea0DnA"#Masters
     # "আপনার_৩য়_লিংকটি_এখানে_বসান"
 ]
 
