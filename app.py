@@ -12,7 +12,7 @@ st.title("🌍 GIS & Geography Academic AI Assistant")
 try:
     api_key = st.secrets["GEMINI_API_KEY"]
 except Exception:
-    st.error("দয়া করে Streamlit Secrets-এ আপনার Gemini API Key সেট করুন।")
+    st.error("দয়া করে Streamlit Secrets-এ আপনার Gemini API Key সেট করুন।")
     st.stop()
 
 @st.cache_resource
@@ -23,11 +23,12 @@ def load_vector_db():
     text_splitter = RecursiveCharacterTextSplitter(chunk_size=1000, chunk_overlap=200)
     splits = text_splitter.split_documents(docs)
     
-    embeddings = GoogleGenerativeAIEmbeddings(model="models/embedding-001", google_api_key=api_key)
+    # Updated embedding model
+    embeddings = GoogleGenerativeAIEmbeddings(model="text-embedding-004", google_api_key=api_key)
     vectorstore = FAISS.from_documents(splits, embeddings)
     return vectorstore.as_retriever(search_kwargs={"k": 3})
 
-with st.spinner("সিলেবাস ও নোটস লোড করা হচ্ছে... দয়া করে অপেক্ষা করুন।"):
+with st.spinner("সিলেবাস ও নোটস লোড করা হচ্ছে... দয়া করে অপেক্ষা করুন।"):
     retriever = load_vector_db()
 
 llm = ChatGoogleGenerativeAI(model="gemini-1.5-flash", google_api_key=api_key, temperature=0.3)
